@@ -1,73 +1,196 @@
-# Welcome to your Lovable project
+# Auth0 + Supabase Integration
 
-## Project info
+A production-ready React application demonstrating secure authentication with Auth0 and automatic user data synchronization to Supabase.
 
-**URL**: https://lovable.dev/projects/d98b4e44-e6a5-469f-8c51-14920ff58e66
+## 🚀 Features
 
-## How can I edit this code?
+- **Auth0 Authentication**: Enterprise-grade security with OAuth 2.0
+- **Supabase Sync**: Automatic user data synchronization with Row-Level Security
+- **Protected Routes**: Secure route protection with automatic redirects
+- **Modern UI**: Beautiful, responsive design with Tailwind CSS
+- **TypeScript**: Full type safety throughout the application
 
-There are several ways of editing your application.
+## 🏗️ Tech Stack
 
-**Use Lovable**
+- **Frontend**: React 18 + Vite
+- **Authentication**: Auth0
+- **Database**: Supabase (PostgreSQL)
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Type Safety**: TypeScript
+- **State Management**: TanStack Query
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d98b4e44-e6a5-469f-8c51-14920ff58e66) and start prompting.
+## 📋 Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+1. **Auth0 Account**: Sign up at [auth0.com](https://auth0.com)
+2. **Lovable Cloud**: Enabled automatically in this project (Supabase backend)
 
-**Use your preferred IDE**
+## ⚙️ Setup Guide
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 1. Auth0 Configuration
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Go to [Auth0 Dashboard](https://manage.auth0.com/)
+2. Create a new Application (Single Page Application)
+3. Configure the following settings:
+   - **Allowed Callback URLs**: `http://localhost:8080, https://your-app-url.com`
+   - **Allowed Logout URLs**: `http://localhost:8080, https://your-app-url.com`
+   - **Allowed Web Origins**: `http://localhost:8080, https://your-app-url.com`
 
-Follow these steps:
+### 2. Environment Variables
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Create a `.env` file in the root directory:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```env
+VITE_AUTH0_DOMAIN=your-domain.auth0.com
+VITE_AUTH0_CLIENT_ID=your-client-id
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+**Note**: Supabase credentials are auto-configured via Lovable Cloud.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 3. Install Dependencies
+
+```bash
+npm install
+```
+
+### 4. Run Development Server
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Visit `http://localhost:8080` to see your app!
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🔐 How It Works
 
-**Use GitHub Codespaces**
+### Authentication Flow
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. User clicks "Sign In" → Redirected to Auth0
+2. After successful Auth0 login → Redirected back to app
+3. User data automatically synced to Supabase `users` table
+4. Protected routes only accessible when authenticated
 
-## What technologies are used for this project?
+### User Data Sync
 
-This project is built with:
+The `useSupabaseSync` hook automatically:
+- Upserts user data to Supabase on login
+- Updates profile information (name, email, picture)
+- Maintains Auth0 user ID for correlation
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Database Schema
 
-## How can I deploy this project?
+```sql
+CREATE TABLE public.users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  auth0_id TEXT UNIQUE NOT NULL,
+  email TEXT NOT NULL,
+  name TEXT,
+  picture TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+```
 
-Simply open [Lovable](https://lovable.dev/projects/d98b4e44-e6a5-469f-8c51-14920ff58e66) and click on Share -> Publish.
+### Row-Level Security (RLS)
 
-## Can I connect a custom domain to my Lovable project?
+RLS policies ensure:
+- Users can only view their own data
+- Users can only update their own data
+- Auto-insert allowed for new users
 
-Yes, you can!
+## 📁 Project Structure
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```
+src/
+├── components/
+│   ├── ProtectedRoute.tsx    # Route protection wrapper
+│   └── ui/                    # shadcn/ui components
+├── contexts/
+│   └── Auth0ProviderWithConfig.tsx  # Auth0 provider setup
+├── hooks/
+│   └── useSupabaseSync.ts     # Auto-sync Auth0 → Supabase
+├── pages/
+│   ├── Index.tsx              # Landing page
+│   ├── Dashboard.tsx          # Protected dashboard
+│   └── NotFound.tsx           # 404 page
+└── integrations/
+    └── supabase/              # Auto-generated Supabase client
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 🔑 Key Components
+
+### Auth0ProviderWithConfig
+Wraps the app with Auth0 context, handles redirects after login.
+
+### ProtectedRoute
+Higher-order component that protects routes from unauthenticated access.
+
+### useSupabaseSync
+Custom hook that automatically syncs Auth0 user data to Supabase on login.
+
+## 🎨 Customization
+
+### Design System
+All colors and styles are defined in:
+- `src/index.css` - CSS custom properties
+- `tailwind.config.ts` - Tailwind theme configuration
+
+### Adding New Protected Routes
+
+```tsx
+<Route 
+  path="/your-route" 
+  element={
+    <ProtectedRoute>
+      <YourComponent />
+    </ProtectedRoute>
+  } 
+/>
+```
+
+## 🚢 Deployment
+
+This app is ready to deploy to:
+- Vercel
+- Netlify
+- Cloudflare Pages
+- Any static hosting service
+
+**Important**: Update Auth0 callback URLs with your production domain.
+
+## 📚 Documentation
+
+- [Auth0 React SDK](https://auth0.com/docs/quickstart/spa/react)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Lovable Cloud Features](https://docs.lovable.dev/features/cloud)
+
+## 🔒 Security Best Practices
+
+✅ Row-Level Security enabled on all tables  
+✅ Auth0 tokens validated on every request  
+✅ Secure environment variable handling  
+✅ Protected routes with automatic redirects  
+✅ HTTPS enforced in production  
+
+## 🐛 Troubleshooting
+
+### "Configuration Error" message
+- Ensure `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_CLIENT_ID` are set in `.env`
+
+### Login redirects to wrong URL
+- Update callback URLs in Auth0 Dashboard settings
+
+### User not syncing to Supabase
+- Check browser console for errors
+- Verify RLS policies in Supabase
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
+
+---
+
+Built with ❤️ using [Lovable](https://lovable.dev)
